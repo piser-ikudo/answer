@@ -105,6 +105,7 @@ type GetRevisionResp struct {
 	CreatedAtParsed int64         `json:"create_at"`
 	UserInfo        UserBasicInfo `json:"user_info"`
 	Log             string        `json:"reason"`
+	TagG            string        `json:"tagg"`
 }
 
 // GetReviewingTypeReq get reviewing type request

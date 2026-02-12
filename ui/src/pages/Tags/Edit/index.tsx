@@ -29,13 +29,17 @@ import { usePageTags, usePromptWithUnload } from '@/hooks';
 import { Editor, EditorRef } from '@/components';
 import { loggedUserInfoStore } from '@/stores';
 import type * as Type from '@/common/interface';
-import { TAG_SLUG_NAME_MAX_LENGTH } from '@/common/constants';
+import {
+  TAG_GROUP_NAME_MAX_LENGTH,
+  TAG_SLUG_NAME_MAX_LENGTH,
+} from '@/common/constants';
 import { useTagInfo, modifyTag, useQueryRevisions } from '@/services';
 
 interface FormDataItem {
   displayName: Type.FormValue<string>;
   slugName: Type.FormValue<string>;
   description: Type.FormValue<string>;
+  tagg: Type.FormValue<string>;
   editSummary: Type.FormValue<string>;
 }
 const initFormData = {
@@ -50,6 +54,11 @@ const initFormData = {
     errorMsg: '',
   },
   description: {
+    value: '',
+    isInvalid: false,
+    errorMsg: '',
+  },
+  tagg: {
     value: '',
     isInvalid: false,
     errorMsg: '',
@@ -87,22 +96,24 @@ const Index = () => {
     initFormData.displayName.value = data?.display_name || '';
     initFormData.slugName.value = data?.slug_name || '';
     initFormData.description.value = data?.original_text || '';
+    initFormData.tagg.value = data?.tagg || '';
     setFormData(initFormData);
     setImmData(initFormData);
   }, [data]);
 
   useEffect(() => {
-    const { displayName, slugName, description, editSummary } = formData;
+    const { displayName, slugName, description, editSummary, tagg } = formData;
     const {
       displayName: display_name,
       slugName: slug_name,
       description: original_text,
+      tagg: tag_group,
     } = immData;
-
     if (
       display_name.value !== displayName.value ||
       slug_name.value !== slugName.value ||
       original_text.value !== description.value ||
+      tag_group.value !== tagg.value ||
       editSummary.value
     ) {
       setContentChanged(true);
@@ -114,6 +125,7 @@ const Index = () => {
     formData.slugName.value,
     formData.description.value,
     formData.editSummary.value,
+    formData.tagg.value,
   ]);
 
   const handleDescriptionChange = (value: string) =>
@@ -124,7 +136,7 @@ const Index = () => {
 
   const checkValidated = (): boolean => {
     let bol = true;
-    const { displayName, slugName } = formData;
+    const { displayName, slugName, tagg } = formData;
 
     if (!displayName.value) {
       bol = false;
@@ -177,6 +189,31 @@ const Index = () => {
         errorMsg: '',
       };
     }
+    if (!tagg.value) {
+      bol = false;
+      formData.tagg = {
+        value: '',
+        isInvalid: true,
+        errorMsg: t('form.fields.tagg.msg.empty', {
+          keyPrefix: 'tag_modal',
+        }),
+      };
+    } else if (tagg.value.length > TAG_GROUP_NAME_MAX_LENGTH) {
+      bol = false;
+      formData.tagg = {
+        value: tagg.value,
+        isInvalid: true,
+        errorMsg: t('form.fields.tagg.msg.range', {
+          keyPrefix: 'tag_modal',
+        }),
+      };
+    } else {
+      formData.tagg = {
+        value: tagg.value,
+        isInvalid: false,
+        errorMsg: '',
+      };
+    }
 
     setFormData({
       ...formData,
@@ -200,6 +237,7 @@ const Index = () => {
       parsed_text: editorRef.current.getHtml(),
       tag_id: data?.tag_id,
       edit_summary: formData.editSummary.value,
+      tagg: formData.tagg.value,
     };
     modifyTag(params).then((res) => {
       navigate(`/tags/${encodeURIComponent(formData.slugName.value)}/info`, {
@@ -215,6 +253,7 @@ const Index = () => {
     formData.description.value = revision.content.original_text;
     formData.displayName.value = revision.content.display_name;
     formData.slugName.value = revision.content.slug_name;
+    formData.tagg.value = revision.content.tagg;
     setImmData({ ...formData });
     setFormData({ ...formData });
   };
@@ -239,7 +278,12 @@ const Index = () => {
       slugName: { ...formData.slugName, value: e.currentTarget.value },
     });
   };
-
+  const handletaggChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      tagg: { ...formData.tagg, value: e.currentTarget.value },
+    });
+  };
   const backPage = () => {
     navigate(-1);
   };
@@ -306,6 +350,24 @@ const Index = () => {
               </Form.Text>
               <Form.Control.Feedback type="invalid">
                 {formData.slugName.errorMsg}
+              </Form.Control.Feedback>
+            </Form.Group>
+
+            <Form.Group controlId="tagg" className="mb-3">
+              <Form.Label>
+                {t('form.fields.tagg.label', { keyPrefix: 'tag_modal' })}
+              </Form.Label>
+              <Form.Control
+                value={formData.tagg.value}
+                isInvalid={formData.tagg.isInvalid}
+                disabled={role_id !== 2 && role_id !== 3}
+                onChange={handletaggChange}
+              />
+              <Form.Text as="div">
+                {t('form.fields.tagg.desc', { keyPrefix: 'tag_modal' })}
+              </Form.Text>
+              <Form.Control.Feedback type="invalid">
+                {formData.tagg.errorMsg}
               </Form.Control.Feedback>
             </Form.Group>
 

@@ -88,6 +88,7 @@ type GetTagResp struct {
 	MainTagSlugName string `json:"main_tag_slug_name"`
 	Recommend       bool   `json:"recommend"`
 	Reserved        bool   `json:"reserved"`
+	TagG            string `json:"tagg"`
 }
 
 func (tr *GetTagResp) GetExcerpt() {
@@ -103,6 +104,8 @@ func (tr *GetTagResp) GetExcerpt() {
 type GetTagPageResp struct {
 	// tag_id
 	TagID string `json:"tag_id"`
+	// Tag_group
+	Tag_group string `json:"tag_group"`
 	// slug_name
 	SlugName string `json:"slug_name"`
 	// display_name
@@ -154,6 +157,8 @@ type TagItem struct {
 	OriginalText string `validate:"omitempty" json:"original_text"`
 	// parsed text
 	ParsedText string `json:"-"`
+	// tag group
+	TagG string `validate:"required,gt=0,lte=20" json:"tag_group"`
 }
 
 // RemoveTagReq delete tag request
@@ -176,6 +181,8 @@ type AddTagReq struct {
 	ParsedText string `json:"-"`
 	// user id
 	UserID string `json:"-"`
+	// tag group
+	TagG string `validate:"required,gt=0,lte=20" json:"tagg"`
 }
 
 func (req *AddTagReq) Check() (errFields []*validator.FormErrorField, err error) {
@@ -195,6 +202,8 @@ type UpdateTagReq struct {
 	TagID string `validate:"required" json:"tag_id"`
 	// slug_name
 	SlugName string `validate:"omitempty,gt=0,lte=35" json:"slug_name"`
+	// slug_name
+	TagG string `validate:"omitempty,gt=0,lte=20" json:"tagg"`
 	// display_name
 	DisplayName string `validate:"omitempty,gt=0,lte=35" json:"display_name"`
 	// original text

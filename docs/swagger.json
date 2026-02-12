@@ -10505,6 +10505,9 @@
                 },
                 "updated_at": {
                     "type": "integer"
+                },
+                "tagg": {
+                  "type": "string"
                 }
             }
         },
@@ -12894,6 +12897,10 @@
                 "tag_id": {
                     "description": "tag_id",
                     "type": "string"
+                },
+                "tagg": {
+                  "description": "tag_group",
+                  "type": "string"
                 }
             }
         },

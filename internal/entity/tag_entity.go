@@ -49,6 +49,7 @@ type Tag struct {
 	Reserved        bool      `xorm:"not null default false BOOL reserved"`
 	RevisionID      string    `xorm:"not null default 0 BIGINT(20) revision_id"`
 	UserID          string    `xorm:"not null default 0 BIGINT(20) user_id"`
+	TagG            string    `xorm:"not null default 'G' VARCHAR(20) TagG"`
 }
 
 // TableName tag table name

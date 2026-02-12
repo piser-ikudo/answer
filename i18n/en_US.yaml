@@ -1041,6 +1041,13 @@ ui:
           placeholder: >-
             Briefly explain your changes (corrected spelling, fixed grammar,
             improved formatting)
+        tagg:
+          label: tag group
+          desc: tag group up to 20 characters.
+          msg:
+            empty: tag group cannot be empty.
+            range: tag group up to 20 characters.
+            character: tag group contains unallowed character set.
     btn_cancel: Cancel
     btn_submit: Submit
     btn_post: Post new tag

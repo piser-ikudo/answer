@@ -1029,6 +1029,13 @@ ui:
           label: 编辑备注
           placeholder: >-
             简单描述更改原因（更正拼写、修复语法、改进格式）
+        tagg:
+          label: 标签分类
+          desc: 标签分类不能超过 20 个字符。
+          msg:
+            empty: 标签分类不能为空。
+            range: 标签分类不能超过 20 个字符。
+            character: 标签分类包含非法字符。
     btn_cancel: 取消
     btn_submit: 提交
     btn_post: 发布新标签

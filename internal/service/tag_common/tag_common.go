@@ -356,6 +356,7 @@ func (ts *TagCommonService) AddTag(ctx context.Context, req *schema.AddTagReq) (
 		ParsedText:   req.ParsedText,
 		Status:       entity.TagStatusAvailable,
 		UserID:       req.UserID,
+		TagG:         req.TagG,
 	}
 	tagList := []*entity.Tag{tagInfo}
 	err = ts.tagCommonRepo.AddTagList(ctx, tagList)
@@ -889,7 +890,8 @@ func (ts *TagCommonService) UpdateTag(ctx context.Context, req *schema.UpdateTag
 	// If the content is the same, ignore it
 	if tagInfo.OriginalText == req.OriginalText &&
 		tagInfo.DisplayName == req.DisplayName &&
-		tagInfo.SlugName == slugName {
+		tagInfo.SlugName == slugName &&
+		tagInfo.TagG == req.TagG {
 		return nil
 	}
 
@@ -897,7 +899,7 @@ func (ts *TagCommonService) UpdateTag(ctx context.Context, req *schema.UpdateTag
 	tagInfo.DisplayName = req.DisplayName
 	tagInfo.OriginalText = req.OriginalText
 	tagInfo.ParsedText = req.ParsedText
-
+	tagInfo.TagG = req.TagG
 	revisionDTO := &schema.AddRevisionDTO{
 		UserID:   req.UserID,
 		ObjectID: tagInfo.ID,

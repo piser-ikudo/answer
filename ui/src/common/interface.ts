@@ -51,6 +51,7 @@ export interface TagBase {
   original_text?: string;
   recommend?: boolean;
   reserved?: boolean;
+  tagg: string;
 }
 
 export interface Tag extends TagBase {
@@ -77,6 +78,7 @@ export interface TagInfo extends TagBase {
   main_tag_slug_name?: string;
   excerpt?;
   status: string;
+  tag_group: string;
 }
 export interface QuestionParams extends ImgCodeReq {
   title: string;

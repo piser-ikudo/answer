@@ -700,6 +700,8 @@ export const SYSTEM_AVATAR_OPTIONS = [
 
 export const TAG_SLUG_NAME_MAX_LENGTH = 35;
 
+export const TAG_GROUP_NAME_MAX_LENGTH = 20;
+
 export const DEFAULT_THEME_COLOR = '#0033ff';
 
 export const SUSPENSE_USER_TIME = [

@@ -1442,6 +1442,8 @@ definitions:
         type: string
       updated_at:
         type: integer
+      tagg:
+        type: string
     type: object
   schema.GetTagSynonymsResp:
     properties:
@@ -3076,6 +3078,10 @@ definitions:
         type: string
       tag_id:
         description: tag_id
+        type: string
+      tagg:
+        description: tag_group
+        maxLength: 20
         type: string
     required:
     - tag_id

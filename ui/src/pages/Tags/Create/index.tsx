@@ -36,6 +36,7 @@ interface FormDataItem {
   displayName: Type.FormValue<string>;
   slugName: Type.FormValue<string>;
   description: Type.FormValue<string>;
+  tagg: Type.FormValue<string>;
 }
 
 const Index = () => {
@@ -51,6 +52,11 @@ const Index = () => {
       errorMsg: '',
     },
     description: {
+      value: '',
+      isInvalid: false,
+      errorMsg: '',
+    },
+    tagg: {
       value: '',
       isInvalid: false,
       errorMsg: '',
@@ -183,6 +189,7 @@ const Index = () => {
       display_name: formData.displayName.value,
       slug_name: formData.slugName.value,
       original_text: formData.description.value,
+      tagg: formData.tagg.value,
     };
     createTag(params)
       .then((res) => {
@@ -196,6 +203,7 @@ const Index = () => {
             { from: 'display_name', to: 'displayName' },
             { from: 'slug_name', to: 'slugName' },
             { from: 'original_text', to: 'description' },
+            { from: 'tagg', to: 'tagg' },
           ]);
           setFormData({ ...data });
           const ele = document.getElementById(err.list[0].error_field);

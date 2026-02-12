@@ -295,6 +295,7 @@ const TagIntroduction = () => {
                           tagInfo?.display_name || tagInfo?.slug_name || '',
                         recommend: false,
                         reserved: false,
+                        tagg: '',
                       }}
                     />
                   </div>

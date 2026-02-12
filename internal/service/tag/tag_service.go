@@ -173,6 +173,7 @@ func (ts *TagService) GetTagInfo(ctx context.Context, req *schema.GetTagInfoReq)
 		resp.MainTagSlugName = tagInfo.SlugName
 	}
 	resp.TagID = tagInfo.ID
+	resp.TagG = tagInfo.TagG
 	resp.CreatedAt = tagInfo.CreatedAt.Unix()
 	resp.UpdatedAt = tagInfo.UpdatedAt.Unix()
 	resp.SlugName = tagInfo.SlugName
@@ -418,6 +419,7 @@ func (ts *TagService) GetTagWithPage(ctx context.Context, req *schema.GetTagWith
 		item := &schema.GetTagPageResp{
 			TagID:         tag.ID,
 			SlugName:      tag.SlugName,
+			Tag_group:     tag.TagG,
 			Description:   htmltext.FetchExcerpt(tag.ParsedText, "...", 240),
 			DisplayName:   tag.DisplayName,
 			OriginalText:  tag.OriginalText,

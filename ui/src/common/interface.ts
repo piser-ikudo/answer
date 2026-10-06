@@ -52,6 +52,8 @@ export interface TagBase {
   recommend?: boolean;
   reserved?: boolean;
   tagg: string;
+  /** tag group, returned by the tag list API and used for grouping tags */
+  tag_group?: string;
 }
 
 export interface Tag extends TagBase {
@@ -94,6 +96,16 @@ export interface QuestionWithAnswer extends QuestionParams {
 export interface ListResult<T = any> {
   count: number;
   list: T[];
+}
+
+export interface TagGroupItem {
+  tag_group: string;
+  tag_count: number;
+}
+
+export interface TagGroupsResp {
+  groups: TagGroupItem[];
+  total_tags: number;
 }
 
 export interface AnswerParams extends ImgCodeReq {
@@ -309,6 +321,8 @@ export type QuestionOrderBy =
 export interface QueryQuestionsReq extends Paging {
   order: QuestionOrderBy;
   tag?: string;
+  /** filter by tag group, a question matches any of the given groups */
+  tag_groups?: string[];
   in_days?: number;
 }
 
@@ -508,6 +522,8 @@ export interface SearchParams extends ImgCodeReq {
   order: string;
   page: number;
   size?: number;
+  /** filter by tag group, a post matches any of the given groups */
+  tag_groups?: string[];
 }
 
 /**

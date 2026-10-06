@@ -369,8 +369,12 @@ type QuestionPageReq struct {
 	PageSize  int    `validate:"omitempty,min=1" form:"page_size"`
 	OrderCond string `validate:"omitempty,oneof=newest active hot score unanswered recommend frequent" form:"order"`
 	Tag       string `validate:"omitempty,gt=0,lte=100" form:"tag"`
-	Username  string `validate:"omitempty,gt=0,lte=100" form:"username"`
-	InDays    int    `validate:"omitempty,min=1" form:"in_days"`
+	// tag group filter, a question matches when it is tagged with a tag of any
+	// of the given groups. Multiple values are accepted both repeated
+	// (tag_groups=go&tag_groups=database) and comma separated (tag_groups=go,database)
+	TagGroups []string `validate:"omitempty,dive,gt=0,lte=20" form:"tag_groups"`
+	Username  string   `validate:"omitempty,gt=0,lte=100" form:"username"`
+	InDays    int      `validate:"omitempty,min=1" form:"in_days"`
 
 	LoginUserID      string `json:"-"`
 	UserIDBeSearched string `json:"-"`

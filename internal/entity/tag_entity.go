@@ -26,6 +26,11 @@ const (
 	TagStatusDeleted   = 10
 )
 
+// DefaultTagGroup is the group given to a tag that is created without an
+// explicit group, e.g. when a new tag is added while posting a question. Tags
+// that already exist always keep the group they were created with.
+const DefaultTagGroup = "default"
+
 var TagStatusDisplayMapping = map[int]string{
 	TagStatusAvailable: "available",
 	TagStatusDeleted:   "deleted",
@@ -49,7 +54,7 @@ type Tag struct {
 	Reserved        bool      `xorm:"not null default false BOOL reserved"`
 	RevisionID      string    `xorm:"not null default 0 BIGINT(20) revision_id"`
 	UserID          string    `xorm:"not null default 0 BIGINT(20) user_id"`
-	TagG            string    `xorm:"not null default 'G' VARCHAR(20) TagG"`
+	TagG            string    `xorm:"not null default 'default' VARCHAR(20) TagG"`
 }
 
 // TableName tag table name

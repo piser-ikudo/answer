@@ -46,6 +46,9 @@ const Index = () => {
   const page = searchParams.get('page') || 1;
   const q = searchParams.get('q') || '';
   const order = searchParams.get('order') || 'relevance';
+  // tag groups can be searched on their own, the keyword is optional then
+  const tagGroupsRaw = searchParams.get('tag_groups') || '';
+  const tagGroups = tagGroupsRaw.split(',').filter(Boolean);
   const [isLoading, setIsLoading] = useState(false);
   const { isSkeletonShow } = useSkeletonControl(isLoading);
   const [data, setData] = useState<SearchRes>({
@@ -58,6 +61,11 @@ const Index = () => {
   const searchCaptcha = useCaptchaPlugin('search');
 
   const doSearch = () => {
+    // nothing to search for, otherwise the request would return every post
+    if (!q && tagGroups.length === 0) {
+      setData({ count: 0, list: [], extra: null });
+      return;
+    }
     setIsLoading(true);
     const params: SearchParams = {
       q,
@@ -65,6 +73,9 @@ const Index = () => {
       page: Number(page),
       size: 20,
     };
+    if (tagGroups.length > 0) {
+      params.tag_groups = tagGroups;
+    }
 
     const captcha = searchCaptcha?.getCaptcha();
     if (captcha?.verify) {
@@ -95,7 +106,7 @@ const Index = () => {
     searchCaptcha.check(() => {
       doSearch();
     });
-  }, [q, order, page]);
+  }, [q, order, page, tagGroupsRaw]);
 
   let pageTitle = t('search', { keyPrefix: 'page_title' });
   if (q) {

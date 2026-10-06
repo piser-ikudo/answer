@@ -263,6 +263,7 @@ func (tc *TagController) GetTagInfo(ctx *gin.Context) {
 // @Param page query int false "page size"
 // @Param page_size query int false "page size"
 // @Param slug_name query string false "slug_name"
+// @Param tag_groups query []string false "tag groups" collectionFormat(multi)
 // @Param query_cond query string false "query condition" Enums(popular, name, newest)
 // @Success 200 {object} handler.RespBody{data=pager.PageModel{list=[]schema.GetTagPageResp}}
 // @Router /answer/api/v1/tags/page [get]
@@ -283,6 +284,25 @@ func (tc *TagController) GetTagWithPage(ctx *gin.Context) {
 		handler.HandleResponse(ctx, errors.NotFound(reason.RequestFormatError), nil)
 		return
 	}
+	handler.HandleResponse(ctx, err, resp)
+}
+
+// GetTagGroups get tag group list
+// @Summary get tag group list
+// @Description get all tag groups with the amount of tags in each of them
+// @Tags Tag
+// @Produce json
+// @Success 200 {object} handler.RespBody{data=schema.GetTagGroupsResp}
+// @Router /answer/api/v1/tags/groups [get]
+func (tc *TagController) GetTagGroups(ctx *gin.Context) {
+	req := &schema.GetTagGroupsReq{}
+	if handler.BindAndCheck(ctx, req) {
+		return
+	}
+
+	req.UserID = middleware.GetLoginUserIDFromContext(ctx)
+
+	resp, err := tc.tagService.GetTagGroups(ctx, req)
 	handler.HandleResponse(ctx, err, resp)
 }
 

@@ -30,7 +30,10 @@ import { loggedUserInfoStore } from '@/stores';
 import type * as Type from '@/common/interface';
 import { createTag } from '@/services';
 import { handleFormError, scrollToElementTop } from '@/utils';
-import { TAG_SLUG_NAME_MAX_LENGTH } from '@/common/constants';
+import {
+  TAG_SLUG_NAME_MAX_LENGTH,
+  TAG_GROUP_NAME_MAX_LENGTH,
+} from '@/common/constants';
 
 interface FormDataItem {
   displayName: Type.FormValue<string>;
@@ -114,7 +117,7 @@ const Index = () => {
   const checkValidated = (): boolean => {
     let bol = true;
     let errObjKey = '';
-    const { displayName, slugName } = formData;
+    const { displayName, slugName, tagg } = formData;
 
     if (!displayName.value) {
       bol = false;
@@ -159,6 +162,31 @@ const Index = () => {
     } else {
       formData.slugName = {
         value: slugName.value,
+        isInvalid: false,
+        errorMsg: '',
+      };
+    }
+
+    // the tag group is required and limited to TAG_GROUP_NAME_MAX_LENGTH
+    if (!tagg.value) {
+      bol = false;
+      errObjKey = 'tagg';
+      formData.tagg = {
+        value: tagg.value,
+        isInvalid: true,
+        errorMsg: t('tagg.msg.empty', { keyPrefix: 'tag_modal' }),
+      };
+    } else if (tagg.value.length > TAG_GROUP_NAME_MAX_LENGTH) {
+      bol = false;
+      errObjKey = 'tagg';
+      formData.tagg = {
+        value: tagg.value,
+        isInvalid: true,
+        errorMsg: t('tagg.msg.range', { keyPrefix: 'tag_modal' }),
+      };
+    } else {
+      formData.tagg = {
+        value: tagg.value,
         isInvalid: false,
         errorMsg: '',
       };
@@ -233,6 +261,16 @@ const Index = () => {
       },
     });
   };
+  const handletaggChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      tagg: {
+        ...formData.tagg,
+        value: e.currentTarget.value,
+        isInvalid: false,
+      },
+    });
+  };
 
   usePageTags({
     title: t('create_tag', { keyPrefix: 'page_title' }),
@@ -270,6 +308,24 @@ const Index = () => {
               <Form.Text as="div">{t('form.fields.slug_name.desc')}</Form.Text>
               <Form.Control.Feedback type="invalid">
                 {formData.slugName.errorMsg}
+              </Form.Control.Feedback>
+            </Form.Group>
+
+            <Form.Group controlId="tagg" className="mb-3">
+              <Form.Label>
+                {t('form.fields.tagg.label', { keyPrefix: 'tag_modal' })}
+              </Form.Label>
+              <Form.Control
+                value={formData.tagg.value}
+                isInvalid={formData.tagg.isInvalid}
+                disabled={role_id !== 2 && role_id !== 3}
+                onChange={handletaggChange}
+              />
+              <Form.Text as="div">
+                {t('form.fields.tagg.desc', { keyPrefix: 'tag_modal' })}
+              </Form.Text>
+              <Form.Control.Feedback type="invalid">
+                {formData.tagg.errorMsg}
               </Form.Control.Feedback>
             </Form.Group>
 

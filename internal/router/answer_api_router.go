@@ -193,6 +193,7 @@ func (a *AnswerAPIRouter) RegisterUnAuthAnswerAPIRouter(r *gin.RouterGroup) {
 
 	// tag
 	r.GET("/tags/page", a.tagController.GetTagWithPage)
+	r.GET("/tags/groups", a.tagController.GetTagGroups)
 	r.GET("/tags/following", a.tagController.GetFollowingTags)
 	r.GET("/tag", a.tagController.GetTagInfo)
 	r.GET("/tags", a.tagController.GetTagsBySlugName)

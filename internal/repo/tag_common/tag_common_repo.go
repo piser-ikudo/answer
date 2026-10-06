@@ -29,11 +29,17 @@ import (
 	"github.com/apache/answer/internal/base/pager"
 	"github.com/apache/answer/internal/base/reason"
 	"github.com/apache/answer/internal/entity"
+	"github.com/apache/answer/internal/schema"
 	tagcommon "github.com/apache/answer/internal/service/tag_common"
 	"github.com/apache/answer/internal/service/unique"
 	"github.com/segmentfault/pacman/errors"
 	"xorm.io/builder"
 )
+
+// tagGroupColumn is the physical column storing a tag's group. The column name
+// is fixed by the xorm mapping of entity.Tag (TagG -> TagG), so it is kept in a
+// single place here and verified against the entity definition in the tests.
+const tagGroupColumn = "TagG"
 
 // tagCommonRepo tag repository
 type tagCommonRepo struct {
@@ -164,7 +170,7 @@ func (tr *tagCommonRepo) GetTagByID(ctx context.Context, tagID string, includeDe
 }
 
 // GetTagPage get tag page
-func (tr *tagCommonRepo) GetTagPage(ctx context.Context, page, pageSize int, tag *entity.Tag, queryCond string) (
+func (tr *tagCommonRepo) GetTagPage(ctx context.Context, page, pageSize int, tag *entity.Tag, tagGroups []string, queryCond string) (
 	tagList []*entity.Tag, total int64, err error,
 ) {
 	tagList = make([]*entity.Tag, 0)
@@ -188,6 +194,9 @@ func (tr *tagCommonRepo) GetTagPage(ctx context.Context, page, pageSize int, tag
 		session.Where(builder.Eq{"main_tag_id": 0})
 	}
 	session.Where(builder.Eq{"status": entity.TagStatusAvailable})
+	if len(tagGroups) > 0 {
+		session.In(tagGroupColumn, tagGroups)
+	}
 
 	switch queryCond {
 	case "popular":
@@ -217,6 +226,55 @@ func (tr *tagCommonRepo) GetTagPage(ctx context.Context, page, pageSize int, tag
 		}
 	}
 
+	return
+}
+
+// GetTagGroups get all tag groups with the amount of tags in each of them.
+// A tag counts once per available relation it has, so the numbers follow the
+// question_count of a tag.
+func (tr *tagCommonRepo) GetTagGroups(ctx context.Context) (groupList []*schema.GetTagGroupResp, err error) {
+	groupList = make([]*schema.GetTagGroupResp, 0)
+	tagTable := new(entity.Tag).TableName()
+	tagRelTable := new(entity.TagRel).TableName()
+	relationStatus := entity.TagRelStatusAvailable
+	status := entity.TagStatusAvailable
+
+	// The group column is aliased back to the json field name used by the API.
+	sql := fmt.Sprintf(`SELECT %s.%s AS tag_group, COUNT(%s.id) AS tag_count`+
+		` FROM %s`+
+		` LEFT JOIN %s ON %s.id = %s.tag_id AND %s.status = %d`+
+		` WHERE %s.status = %d`+
+		` GROUP BY %s.%s`+
+		` ORDER BY tag_count DESC, %s.%s ASC`,
+		tagTable, tagGroupColumn,
+		tagRelTable,
+		tagTable,
+		tagRelTable, tagTable, tagRelTable, tagRelTable, relationStatus,
+		tagTable, status,
+		tagTable, tagGroupColumn,
+		tagTable, tagGroupColumn)
+
+	if err = tr.data.DB.Context(ctx).SQL(sql).Find(&groupList); err != nil {
+		err = errors.InternalServer(reason.DatabaseError).WithError(err).WithStack()
+	}
+	return
+}
+
+// GetTagIDsByGroups get the ids of every available tag that belongs to one of
+// the given tag groups.
+func (tr *tagCommonRepo) GetTagIDsByGroups(ctx context.Context, tagGroups []string) (tagIDs []string, err error) {
+	tagIDs = make([]string, 0)
+	if len(tagGroups) == 0 {
+		return tagIDs, nil
+	}
+	if err = tr.data.DB.Context(ctx).
+		Table(new(entity.Tag).TableName()).
+		In(tagGroupColumn, tagGroups).
+		Where(builder.Eq{"status": entity.TagStatusAvailable}).
+		Cols("id").
+		Find(&tagIDs); err != nil {
+		err = errors.InternalServer(reason.DatabaseError).WithError(err).WithStack()
+	}
 	return
 }
 

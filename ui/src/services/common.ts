@@ -35,8 +35,11 @@ export const queryQuestionByTitle = (title: string) => {
 };
 
 export const useQueryTags = (params) => {
+  // tag_groups is a list and must be serialized as repeated query parameters,
+  // e.g. tag_groups=go&tag_groups=database, which is what the API binds.
   const apiUrl = `/answer/api/v1/tags/page?${qs.stringify(params, {
     skipNulls: true,
+    arrayFormat: 'repeat',
   })}`;
   const { data, error, mutate } = useSWR<Type.ListResult>(apiUrl, (url) =>
     request.get(url, { allow404: true }),
@@ -46,6 +49,21 @@ export const useQueryTags = (params) => {
     isLoading: !data && !error,
     error,
     mutate,
+  };
+};
+
+/**
+ * @description get all tag groups with the amount of tags in each of them
+ */
+export const useQueryTagGroups = () => {
+  const apiUrl = '/answer/api/v1/tags/groups';
+  const { data, error } = useSWR<Type.TagGroupsResp>(apiUrl, (url) =>
+    request.get(url),
+  );
+  return {
+    data,
+    isLoading: !data && !error,
+    error,
   };
 };
 

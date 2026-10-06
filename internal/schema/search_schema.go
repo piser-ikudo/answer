@@ -29,16 +29,31 @@ import (
 )
 
 type SearchDTO struct {
-	Query       string `validate:"required,gte=1,lte=60" form:"q"`
-	Page        int    `validate:"omitempty,min=1" form:"page,default=1"`
-	Size        int    `validate:"omitempty,min=1,max=50" form:"size,default=30"`
-	Order       string `validate:"required,oneof=newest active score relevance" form:"order,default=relevance" enums:"newest,active,score,relevance"`
-	CaptchaID   string `form:"captcha_id"`
-	CaptchaCode string `form:"captcha_code"`
-	UserID      string `json:"-"`
+	Query string `validate:"omitempty,lte=60" form:"q"`
+	Page  int    `validate:"omitempty,min=1" form:"page,default=1"`
+	Size  int    `validate:"omitempty,min=1,max=50" form:"size,default=30"`
+	Order string `validate:"required,oneof=newest active score relevance" form:"order,default=relevance" enums:"newest,active,score,relevance"`
+	// tag groups, a post matches when it is tagged with a tag of any of the
+	// given groups. It allows searching with an empty query, so users can browse
+	// every post of the selected groups
+	TagGroups   []string `validate:"omitempty,dive,gt=0,lte=20" form:"tag_groups"`
+	CaptchaID   string   `form:"captcha_id"`
+	CaptchaCode string   `form:"captcha_code"`
+	UserID      string   `json:"-"`
 }
 
 func (s *SearchDTO) Check() (errField []*validator.FormErrorField, err error) {
+	// At least one search condition is required, otherwise the request would
+	// match every post. The query can be empty when tag groups are selected.
+	if len(strings.TrimSpace(s.Query)) == 0 && len(s.TagGroups) == 0 {
+		return []*validator.FormErrorField{
+			{
+				ErrorField: "q",
+				ErrorMsg:   "query or tag_groups is required",
+			},
+		}, nil
+	}
+
 	// Replace special characters.
 	// Special characters will cause the search abnormal, such as search for "#" will get nearly all the content that Markdown format.
 	replacedContent, patterns := ReplaceSearchContent(s.Query)

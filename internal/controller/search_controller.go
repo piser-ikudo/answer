@@ -57,8 +57,9 @@ func NewSearchController(
 // @Tags Search
 // @Produce json
 // @Security ApiKeyAuth
-// @Param q query string true "query string"
+// @Param q query string false "query string, can be empty when tag_groups is given"
 // @Param order query string true "order" Enums(newest,active,score,relevance)
+// @Param tag_groups query []string false "tag groups" collectionFormat(multi)
 // @Success 200 {object} handler.RespBody{data=schema.SearchResp}
 // @Router /answer/api/v1/search [get]
 func (sc *SearchController) Search(ctx *gin.Context) {

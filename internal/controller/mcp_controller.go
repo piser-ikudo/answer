@@ -257,7 +257,7 @@ func (c *MCPController) MCPTagsHandler() func(ctx context.Context, request mcp.C
 			return nil, err
 		}
 
-		tags, total, err := c.tagCommonService.GetTagPage(ctx, 1, 10, &entity.Tag{DisplayName: cond.TagName}, "newest")
+		tags, total, err := c.tagCommonService.GetTagPage(ctx, 1, 10, &entity.Tag{DisplayName: cond.TagName}, nil, "newest")
 		if err != nil {
 			log.Errorf("get tags failed: %v", err)
 			return nil, err

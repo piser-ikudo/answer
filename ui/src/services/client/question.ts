@@ -23,8 +23,15 @@ import qs from 'qs';
 import request from '@/utils/request';
 import type * as Type from '@/common/interface';
 
+// tag_groups is a list and must be serialized as repeated query parameters,
+// e.g. tag_groups=go&tag_groups=database, which is what the API binds.
+const stringifyQuestionParams = (params: Type.QueryQuestionsReq) =>
+  qs.stringify(params, { arrayFormat: 'repeat' });
+
 export const useQuestionList = (params: Type.QueryQuestionsReq) => {
-  const apiUrl = `/answer/api/v1/question/page?${qs.stringify(params)}`;
+  const apiUrl = `/answer/api/v1/question/page?${stringifyQuestionParams(
+    params,
+  )}`;
   const { data, error } = useSWR<Type.ListResult, Error>(apiUrl, (url) =>
     request.get(url, { allow404: true }),
   );
@@ -36,7 +43,7 @@ export const useQuestionList = (params: Type.QueryQuestionsReq) => {
 };
 
 export const useQuestionRecommendList = (params: Type.QueryQuestionsReq) => {
-  const apiUrl = `/answer/api/v1/question/recommend/page?${qs.stringify(
+  const apiUrl = `/answer/api/v1/question/recommend/page?${stringifyQuestionParams(
     params,
   )}`;
   const { data, error } = useSWR<Type.ListResult, Error>(
@@ -58,7 +65,9 @@ export const useHotQuestions = (
     in_days: 7,
   },
 ) => {
-  const apiUrl = `/answer/api/v1/question/page?${qs.stringify(params)}`;
+  const apiUrl = `/answer/api/v1/question/page?${stringifyQuestionParams(
+    params,
+  )}`;
   const { data, error } = useSWR<Type.ListResult, Error>(
     [apiUrl],
     request.instance.get,

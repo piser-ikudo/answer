@@ -145,8 +145,13 @@ func (sr *searchRepo) SearchContents(ctx context.Context, words []string, tagIDs
 		argsA = append(argsA, "%"+word+"%")
 	}
 
-	b.Where(likeConQ)
-	ub.Where(likeConA)
+	// only filter by keyword when there is one, otherwise the tag group filter
+	// must be able to match every post of those groups. An empty condition would
+	// also produce invalid SQL.
+	if len(words) > 0 {
+		b.Where(likeConQ)
+		ub.Where(likeConA)
+	}
 
 	// check tag
 	for ti, tagID := range tagIDs {
@@ -268,7 +273,10 @@ func (sr *searchRepo) SearchQuestions(ctx context.Context, words []string, tagID
 		args = append(args, "%"+word+"%")
 		args = append(args, "%"+word+"%")
 	}
-	b.Where(likeConQ)
+	// only filter by keyword when there is one, see SearchContents
+	if len(words) > 0 {
+		b.Where(likeConQ)
+	}
 
 	// check tag
 	for ti, tagID := range tagIDs {
@@ -381,7 +389,10 @@ func (sr *searchRepo) SearchAnswers(ctx context.Context, words []string, tagIDs 
 		args = append(args, "%"+word+"%")
 	}
 
-	b.Where(likeConA)
+	// only filter by keyword when there is one, see SearchContents
+	if len(words) > 0 {
+		b.Where(likeConA)
+	}
 
 	// check tag
 	for ti, tagID := range tagIDs {

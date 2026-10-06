@@ -1483,9 +1483,34 @@ func (qs *QuestionService) GetQuestionPage(ctx context.Context, req *schema.Ques
 			}
 			tagIDs = append(tagIDs, synTagIds...)
 			tagIDs = append(tagIDs, tagInfo.ID)
-		} else {
+		} else if len(req.TagGroups) == 0 {
 			return questions, 0, nil
 		}
+	}
+
+	// query by tag group condition. A question matches when it is tagged with a
+	// tag of any of the selected groups, so every matching tag id is collected
+	// and the question query unions them.
+	tagGroups := make([]string, 0, len(req.TagGroups))
+	for _, tagGroup := range req.TagGroups {
+		if tagGroup = strings.TrimSpace(tagGroup); tagGroup != "" {
+			tagGroups = append(tagGroups, tagGroup)
+		}
+	}
+	if len(tagGroups) > 0 {
+		groupTagIDs, err := qs.tagCommon.GetTagIDsByGroups(ctx, tagGroups)
+		if err != nil {
+			return nil, 0, err
+		}
+		// no tag belongs to the selected groups, so nothing can match. The
+		// filter is applied through a value that no tag can have, keeping the
+		// behaviour identical to an unknown tag slug.
+		if len(groupTagIDs) == 0 {
+			tagIDs = append(tagIDs, "-1")
+		} else {
+			tagIDs = append(tagIDs, groupTagIDs...)
+		}
+		tagIDs = converter.UniqueArray(tagIDs)
 	}
 
 	// query by user condition

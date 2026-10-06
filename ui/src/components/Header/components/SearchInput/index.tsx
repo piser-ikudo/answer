@@ -24,7 +24,13 @@ import { useTranslation } from 'react-i18next';
 
 import { Icon } from '@/components';
 
-const SearchInput: FC<{ className?: string }> = ({ className }) => {
+interface SearchProps {
+  className?: string;
+  /** notified with the current keyword every time the input changes */
+  onSearchChange?: (searchStr: string) => void;
+}
+
+const SearchInput: FC<SearchProps> = ({ className, onSearchChange }) => {
   const { t } = useTranslation('translation', { keyPrefix: 'header' });
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,6 +39,7 @@ const SearchInput: FC<{ className?: string }> = ({ className }) => {
   const [searchStr, setSearch] = useState('');
   const handleInput = (val) => {
     setSearch(val);
+    onSearchChange?.(val);
   };
   const handleSearch = (evt) => {
     evt.preventDefault();

@@ -48,15 +48,24 @@ func (ss *SearchService) Search(ctx context.Context, dto *schema.SearchDTO) (res
 	if dto.Page < 1 {
 		dto.Page = 1
 	}
-	if len(dto.Query) == 0 {
-		return &schema.SearchResp{
-			Total:         0,
-			SearchResults: make([]*schema.SearchResult, 0),
-		}, nil
+	emptyResp := &schema.SearchResp{
+		Total:         0,
+		SearchResults: make([]*schema.SearchResult, 0),
+	}
+	// The keyword can be empty when tag groups are selected, then every post of
+	// those groups is returned.
+	if len(dto.Query) == 0 && len(dto.TagGroups) == 0 {
+		return emptyResp, nil
 	}
 
 	// search type
 	cond := ss.searchParser.ParseStructure(ctx, dto)
+
+	// The caller asked for specific tag groups but none of them has a tag, so
+	// nothing can match. This must not fall back to returning every post.
+	if len(dto.TagGroups) > 0 && len(cond.Tags) == 0 {
+		return emptyResp, nil
+	}
 
 	// check search plugin
 	var finder plugin.Search

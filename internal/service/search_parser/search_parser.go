@@ -57,6 +57,9 @@ func (sp *SearchParser) ParseStructure(ctx context.Context, dto *schema.SearchDT
 	// match tags
 	cond.Tags = sp.parseTags(ctx, &query)
 
+	// match tag groups
+	cond.Tags = append(cond.Tags, sp.parseTagGroups(ctx, dto.TagGroups)...)
+
 	// match all
 	cond.UserID = sp.parseUserID(ctx, &query, dto.UserID)
 	cond.VoteAmount = sp.parseVotes(&query)
@@ -149,6 +152,23 @@ func (sp *SearchParser) parseTags(ctx context.Context, query *string) (tags [][]
 	q = strings.TrimSpace(re.ReplaceAllString(q, ""))
 	*query = q
 	return
+}
+
+// parseTagGroups resolve the given tag groups into the tag ids to search.
+//
+// Every tag of every selected group is returned as a single group, so the
+// search matches a post that is tagged with a tag of ANY of the selected
+// groups (OR). The repo creates one join per element of the returned slice, so
+// returning one element per group would require a post to match them all.
+func (sp *SearchParser) parseTagGroups(ctx context.Context, tagGroups []string) (tags [][]string) {
+	if len(tagGroups) == 0 {
+		return nil
+	}
+	tagIDs, err := sp.tagCommonService.GetTagIDsByGroups(ctx, tagGroups)
+	if err != nil || len(tagIDs) == 0 {
+		return nil
+	}
+	return [][]string{tagIDs}
 }
 
 // parseUserID return user id or current login user id

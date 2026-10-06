@@ -48,7 +48,9 @@ type TagCommonRepo interface {
 	GetTagListByName(ctx context.Context, name string, recommend, reserved bool) (tagList []*entity.Tag, err error)
 	GetTagListByNames(ctx context.Context, names []string) (tagList []*entity.Tag, err error)
 	GetTagByID(ctx context.Context, tagID string, includeDeleted bool) (tag *entity.Tag, exist bool, err error)
-	GetTagPage(ctx context.Context, page, pageSize int, tag *entity.Tag, queryCond string) (tagList []*entity.Tag, total int64, err error)
+	GetTagPage(ctx context.Context, page, pageSize int, tag *entity.Tag, tagGroups []string, queryCond string) (tagList []*entity.Tag, total int64, err error)
+	GetTagGroups(ctx context.Context) (groupList []*schema.GetTagGroupResp, err error)
+	GetTagIDsByGroups(ctx context.Context, tagGroups []string) (tagIDs []string, err error)
 	GetRecommendTagList(ctx context.Context) (tagList []*entity.Tag, err error)
 	GetReservedTagList(ctx context.Context) (tagList []*entity.Tag, err error)
 	UpdateTagsAttribute(ctx context.Context, tags []string, attribute string, value bool) (err error)
@@ -426,14 +428,48 @@ func (ts *TagCommonService) GetTagListByIDs(ctx context.Context, ids []string) (
 }
 
 // GetTagPage get object tag
-func (ts *TagCommonService) GetTagPage(ctx context.Context, page, pageSize int, tag *entity.Tag, queryCond string) (
+func (ts *TagCommonService) GetTagPage(ctx context.Context, page, pageSize int, tag *entity.Tag, tagGroups []string, queryCond string) (
 	tagList []*entity.Tag, total int64, err error) {
-	tagList, total, err = ts.tagCommonRepo.GetTagPage(ctx, page, pageSize, tag, queryCond)
+	tagList, total, err = ts.tagCommonRepo.GetTagPage(ctx, page, pageSize, tag, tagGroups, queryCond)
 	if err != nil {
 		return nil, 0, err
 	}
 	ts.TagsFormatRecommendAndReserved(ctx, tagList)
 	return
+}
+
+// GetTagGroups get all tag groups with the amount of tags in each of them
+func (ts *TagCommonService) GetTagGroups(ctx context.Context) (groupList []*schema.GetTagGroupResp, err error) {
+	return ts.tagCommonRepo.GetTagGroups(ctx)
+}
+
+// GetTagIDsByGroups get every available tag id of the given tag groups, main
+// tags and their synonyms included.
+func (ts *TagCommonService) GetTagIDsByGroups(ctx context.Context, tagGroups []string) (tagIDs []string, err error) {
+	tagIDs = make([]string, 0)
+	if len(tagGroups) == 0 {
+		return tagIDs, nil
+	}
+	groupTagIDs, err := ts.tagCommonRepo.GetTagIDsByGroups(ctx, tagGroups)
+	if err != nil {
+		return nil, err
+	}
+	if len(groupTagIDs) == 0 {
+		return tagIDs, nil
+	}
+
+	// a question can be tagged with a synonym, so the tags pointing to one of
+	// the group tags as their main tag must be searched as well.
+	for _, tagID := range groupTagIDs {
+		synonymIDs, err := ts.tagRepo.GetIDsByMainTagId(ctx, tagID)
+		if err != nil {
+			return nil, err
+		}
+		tagIDs = append(tagIDs, synonymIDs...)
+	}
+
+	tagIDs = append(tagIDs, groupTagIDs...)
+	return converter.UniqueArray(tagIDs), nil
 }
 
 func (ts *TagCommonService) GetObjectEntityTag(ctx context.Context, objectId string) (objTags []*entity.Tag, err error) {
@@ -695,6 +731,7 @@ func (ts *TagCommonService) ObjectChangeTag(ctx context.Context, objectTagData *
 	for _, tag := range objectTagData.Tags {
 		_, ok := tagInDbMapping[strings.ToLower(tag.SlugName)]
 		if ok {
+			// The tag already exists, so it keeps the group it was created with.
 			continue
 		}
 		item := &entity.Tag{}
@@ -704,6 +741,9 @@ func (ts *TagCommonService) ObjectChangeTag(ctx context.Context, objectTagData *
 		item.ParsedText = tag.ParsedText
 		item.Status = entity.TagStatusAvailable
 		item.UserID = objectTagData.UserID
+		// A tag created here (while posting a question) has no group of its own,
+		// so it goes to the default group.
+		item.TagG = entity.DefaultTagGroup
 		addTagList = append(addTagList, item)
 	}
 

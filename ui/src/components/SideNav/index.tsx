@@ -78,6 +78,10 @@ const Index: FC = () => {
         <span>{t('header.nav.badges')}</span>
       </NavLink>
 
+      <NavLink to="/search" className="nav-link">
+        <Icon name="search" className="me-2" />
+        <span>{t('header.nav.search')}</span>
+      </NavLink>
       <PluginRender
         slug_name="quick_links"
         type={PluginType.Sidebar}

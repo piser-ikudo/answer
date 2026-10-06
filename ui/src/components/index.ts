@@ -68,6 +68,7 @@ import BubbleAi from './BubbleAi';
 import BubbleUser from './BubbleUser';
 import Sender from './Sender';
 import TabNav from './TabNav';
+import TagGroupFilter from './TagGroupFilter';
 
 export {
   Avatar,
@@ -123,5 +124,6 @@ export {
   BubbleUser,
   Sender,
   TabNav,
+  TagGroupFilter,
 };
 export type { EditorRef, JSONSchema, UISchema };

@@ -89,6 +89,8 @@ type GetTagResp struct {
 	Recommend       bool   `json:"recommend"`
 	Reserved        bool   `json:"reserved"`
 	TagG            string `json:"tagg"`
+	// tag group, exposed with the same name used by the tag list API
+	TagGroup string `json:"tag_group"`
 }
 
 func (tr *GetTagResp) GetExcerpt() {
@@ -104,8 +106,8 @@ func (tr *GetTagResp) GetExcerpt() {
 type GetTagPageResp struct {
 	// tag_id
 	TagID string `json:"tag_id"`
-	// Tag_group
-	Tag_group string `json:"tag_group"`
+	// tag group
+	TagGroup string `json:"tag_group"`
 	// slug_name
 	SlugName string `json:"slug_name"`
 	// display_name
@@ -157,8 +159,10 @@ type TagItem struct {
 	OriginalText string `validate:"omitempty" json:"original_text"`
 	// parsed text
 	ParsedText string `json:"-"`
-	// tag group
-	TagG string `validate:"required,gt=0,lte=20" json:"tag_group"`
+	// tag group. This struct is reused to reference tags that already exist
+	// (posting a question, declaring synonyms), so the group cannot be required
+	// here. AddTagReq validates the group when a tag is created.
+	TagG string `validate:"omitempty,gt=0,lte=20" json:"tag_group"`
 }
 
 // RemoveTagReq delete tag request
@@ -243,10 +247,35 @@ type GetTagWithPageReq struct {
 	SlugName string `validate:"omitempty,gt=0,lte=35" form:"slug_name"`
 	// display_name
 	DisplayName string `validate:"omitempty,gt=0,lte=35" form:"display_name"`
+	// tag groups, filter tags by the groups they belong to. A tag matches when
+	// it belongs to any of the given groups
+	TagGroups []string `validate:"omitempty,dive,gt=0,lte=20" form:"tag_groups"`
 	// query condition
 	QueryCond string `validate:"omitempty,oneof=popular name newest" form:"query_cond"`
 	// user id
 	UserID string `json:"-"`
+}
+
+// GetTagGroupsReq get tag group list request
+type GetTagGroupsReq struct {
+	// user id
+	UserID string `json:"-"`
+}
+
+// GetTagGroupResp tag group with the amount of tags in it
+type GetTagGroupResp struct {
+	// tag group name
+	TagGroup string `json:"tag_group"`
+	// amount of available tags in this group
+	TagCount int64 `json:"tag_count"`
+}
+
+// GetTagGroupsResp get tag group list response
+type GetTagGroupsResp struct {
+	// tag group list ordered by tag amount descending
+	Groups []*GetTagGroupResp `json:"groups"`
+	// total amount of available tags
+	TotalTags int64 `json:"total_tags"`
 }
 
 // GetTagSynonymsReq get tag synonyms request

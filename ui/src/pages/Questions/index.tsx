@@ -28,6 +28,7 @@ import {
   QuestionList,
   HotQuestions,
   CustomSidebar,
+  TagGroupFilter,
 } from '@/components';
 import {
   siteInfoStore,
@@ -43,19 +44,37 @@ const Questions: FC = () => {
   const { t } = useTranslation('translation', { keyPrefix: 'question' });
   const { t: t2 } = useTranslation('translation');
   const { user: loggedUser } = loggedUserInfoStore((_) => _);
-  const [urlSearchParams] = useSearchParams();
+  const [urlSearchParams, setUrlSearchParams] = useSearchParams();
   const curPage = Number(urlSearchParams.get('page')) || 1;
   const curOrder = (urlSearchParams.get('order') ||
     QUESTION_ORDER_KEYS[0]) as Type.QuestionOrderBy;
+  const curGroups = (urlSearchParams.get('tag_groups') || '')
+    .split(',')
+    .filter(Boolean);
   const reqParams: Type.QueryQuestionsReq = {
     page_size: 20,
     page: curPage,
     order: curOrder as Type.QuestionOrderBy,
+    ...(curGroups.length > 0 ? { tag_groups: curGroups } : {}),
   };
   const { data: listData, isLoading: listLoading } =
     curOrder === 'recommend'
-      ? useQuestionRecommendList(reqParams)
+      ? // the recommend feed is built from followed tags, a group filter does
+        // not apply to it
+        useQuestionRecommendList({ ...reqParams, tag_groups: undefined })
       : useQuestionList(reqParams);
+
+  const handleGroupsChange = (groups: string[]) => {
+    setUrlSearchParams((prev) => {
+      if (groups.length > 0) {
+        prev.set('tag_groups', groups.join(','));
+      } else {
+        prev.delete('tag_groups');
+      }
+      prev.set('page', '1');
+      return prev;
+    });
+  };
   const isIndexPage = useMatch('/');
   let pageTitle = t('questions', { keyPrefix: 'page_title' });
   let slogan = '';
@@ -70,6 +89,13 @@ const Questions: FC = () => {
   return (
     <Row className="pt-4 mb-5">
       <Col className="page-main flex-auto overflow-x-hidden">
+        <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
+          <TagGroupFilter
+            selected={curGroups}
+            onChange={handleGroupsChange}
+            size="sm"
+          />
+        </div>
         <QuestionList
           source="questions"
           data={listData}

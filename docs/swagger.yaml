@@ -408,10 +408,15 @@ definitions:
         description: slug_name
         maxLength: 35
         type: string
+      tagg:
+        description: tag group
+        maxLength: 20
+        type: string
     required:
     - display_name
     - original_text
     - slug_name
+    - tagg
     type: object
   schema.AddUserReq:
     properties:
@@ -1297,6 +1302,8 @@ definitions:
         type: string
       status:
         type: integer
+      tagg:
+        type: string
       title:
         type: string
       url_title:
@@ -1359,6 +1366,26 @@ definitions:
       tag_id:
         type: string
     type: object
+  schema.GetTagGroupResp:
+    properties:
+      tag_count:
+        description: amount of available tags in this group
+        type: integer
+      tag_group:
+        description: tag group name
+        type: string
+    type: object
+  schema.GetTagGroupsResp:
+    properties:
+      groups:
+        description: tag group list ordered by tag amount descending
+        items:
+          $ref: '#/definitions/schema.GetTagGroupResp'
+        type: array
+      total_tags:
+        description: total amount of available tags
+        type: integer
+    type: object
   schema.GetTagPageResp:
     properties:
       created_at:
@@ -1394,6 +1421,9 @@ definitions:
         type: boolean
       slug_name:
         description: slug_name
+        type: string
+      tag_group:
+        description: tag group
         type: string
       tag_id:
         description: tag_id
@@ -1438,12 +1468,15 @@ definitions:
         type: string
       status:
         type: string
+      tag_group:
+        description: tag group, exposed with the same name used by the tag list API
+        type: string
       tag_id:
+        type: string
+      tagg:
         type: string
       updated_at:
         type: integer
-      tagg:
-        type: string
     type: object
   schema.GetTagSynonymsResp:
     properties:
@@ -1906,6 +1939,14 @@ definitions:
       tag:
         maxLength: 100
         type: string
+      tag_groups:
+        description: |-
+          tag group filter, a question matches when it is tagged with a tag of any
+          of the given groups. Multiple values are accepted both repeated
+          (tag_groups=go&tag_groups=database) and comma separated (tag_groups=go,database)
+        items:
+          type: string
+        type: array
       username:
         maxLength: 100
         type: string
@@ -2801,6 +2842,12 @@ definitions:
         description: slug_name
         maxLength: 35
         type: string
+      tag_group:
+        description: tag group
+        maxLength: 20
+        type: string
+    required:
+    - tag_group
     type: object
   schema.TagResp:
     properties:
@@ -3080,7 +3127,7 @@ definitions:
         description: tag_id
         type: string
       tagg:
-        description: tag_group
+        description: slug_name
         maxLength: 20
         type: string
     required:
@@ -7333,10 +7380,9 @@ paths:
     get:
       description: search object
       parameters:
-      - description: query string
+      - description: query string, can be empty when tag_groups is given
         in: query
         name: q
-        required: true
         type: string
       - description: order
         enum:
@@ -7348,6 +7394,13 @@ paths:
         name: order
         required: true
         type: string
+      - collectionFormat: multi
+        description: tag groups
+        in: query
+        items:
+          type: string
+        name: tag_groups
+        type: array
       produces:
       - application/json
       responses:
@@ -7674,6 +7727,24 @@ paths:
       summary: get following tag list
       tags:
       - Tag
+  /answer/api/v1/tags/groups:
+    get:
+      description: get all tag groups with the amount of tags in each of them
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.RespBody'
+            - properties:
+                data:
+                  $ref: '#/definitions/schema.GetTagGroupsResp'
+              type: object
+      summary: get tag group list
+      tags:
+      - Tag
   /answer/api/v1/tags/page:
     get:
       description: get tag page
@@ -7690,6 +7761,13 @@ paths:
         in: query
         name: slug_name
         type: string
+      - collectionFormat: multi
+        description: tag groups
+        in: query
+        items:
+          type: string
+        name: tag_groups
+        type: array
       - description: query condition
         enum:
         - popular

@@ -22,6 +22,7 @@ import i18next from 'i18next';
 import pattern from '@/common/pattern';
 import { USER_AGENT_NAMES } from '@/common/constants';
 import type * as Type from '@/common/interface';
+import { toastStore } from '@/stores';
 
 const Diff = require('diff');
 
@@ -158,6 +159,9 @@ function handleFormError(
   data: any,
   keymap?: Array<{ from: string; to: string }>,
 ) {
+  // Errors that match no field of the form used to be dropped, so a rejected
+  // submit looked like nothing happened at all. Surface those instead.
+  const unmapped: string[] = [];
   if (error.list?.length > 0) {
     error.list.forEach((item) => {
       if (keymap?.length) {
@@ -170,7 +174,18 @@ function handleFormError(
       if (errorFieldObject) {
         errorFieldObject.isInvalid = true;
         errorFieldObject.errorMsg = item.error_msg;
+      } else {
+        unmapped.push(item.error_msg || item.error_field);
       }
+    });
+  }
+  if (unmapped.length > 0) {
+    toastStore.getState().show({
+      msg: i18next.t('toast.request_failed', {
+        msg: unmapped.join('; '),
+        keyPrefix: 'ui',
+      }),
+      variant: 'danger',
     });
   }
   return data;

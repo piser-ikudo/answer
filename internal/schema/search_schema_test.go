@@ -39,3 +39,56 @@ func TestReplaceSearchContent(t *testing.T) {
 
 	assert.Equal(t, "user:aaa-sss score:3 [tag1] [tag2] ssssfdfdf as fsadf", ret)
 }
+
+// TestSearchDTO_Check covers the rule that allows searching by tag groups only,
+// while still refusing a request without any search condition.
+func TestSearchDTO_Check(t *testing.T) {
+	cases := []struct {
+		name      string
+		query     string
+		tagGroups []string
+		wantError bool
+	}{
+		{
+			name:      "keyword only is allowed",
+			query:     "golang",
+			wantError: false,
+		},
+		{
+			name:      "tag groups with an empty keyword are allowed",
+			query:     "",
+			tagGroups: []string{"Go", "Database"},
+			wantError: false,
+		},
+		{
+			name:      "tag groups with a blank keyword are allowed",
+			query:     "   ",
+			tagGroups: []string{"Go"},
+			wantError: false,
+		},
+		{
+			name:      "neither keyword nor tag group is refused",
+			query:     "",
+			wantError: true,
+		},
+		{
+			name:      "only blank keyword is refused",
+			query:     "   ",
+			wantError: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			dto := &SearchDTO{Query: tc.query, TagGroups: tc.tagGroups}
+			errFields, err := dto.Check()
+			assert.NoError(t, err)
+			if tc.wantError {
+				assert.NotEmpty(t, errFields)
+				assert.Equal(t, "q", errFields[0].ErrorField)
+				return
+			}
+			assert.Empty(t, errFields)
+		})
+	}
+}

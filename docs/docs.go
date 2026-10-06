@@ -6471,10 +6471,9 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "query string",
+                        "description": "query string, can be empty when tag_groups is given",
                         "name": "q",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "enum": [
@@ -6488,6 +6487,16 @@ const docTemplate = `{
                         "name": "order",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "tag groups",
+                        "name": "tag_groups",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -7028,6 +7037,38 @@ const docTemplate = `{
                 }
             }
         },
+        "/answer/api/v1/tags/groups": {
+            "get": {
+                "description": "get all tag groups with the amount of tags in each of them",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tag"
+                ],
+                "summary": "get tag group list",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handler.RespBody"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/schema.GetTagGroupsResp"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/answer/api/v1/tags/page": {
             "get": {
                 "description": "get tag page",
@@ -7055,6 +7096,16 @@ const docTemplate = `{
                         "type": "string",
                         "description": "slug_name",
                         "name": "slug_name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "tag groups",
+                        "name": "tag_groups",
                         "in": "query"
                     },
                     {
@@ -9031,7 +9082,8 @@ const docTemplate = `{
             "required": [
                 "display_name",
                 "original_text",
-                "slug_name"
+                "slug_name",
+                "tagg"
             ],
             "properties": {
                 "display_name": {
@@ -9048,6 +9100,11 @@ const docTemplate = `{
                     "description": "slug_name",
                     "type": "string",
                     "maxLength": 35
+                },
+                "tagg": {
+                    "description": "tag group",
+                    "type": "string",
+                    "maxLength": 20
                 }
             }
         },
@@ -10321,6 +10378,9 @@ const docTemplate = `{
                 "status": {
                     "type": "integer"
                 },
+                "tagg": {
+                    "type": "string"
+                },
                 "title": {
                     "type": "string"
                 },
@@ -10416,6 +10476,35 @@ const docTemplate = `{
                 }
             }
         },
+        "schema.GetTagGroupResp": {
+            "type": "object",
+            "properties": {
+                "tag_count": {
+                    "description": "amount of available tags in this group",
+                    "type": "integer"
+                },
+                "tag_group": {
+                    "description": "tag group name",
+                    "type": "string"
+                }
+            }
+        },
+        "schema.GetTagGroupsResp": {
+            "type": "object",
+            "properties": {
+                "groups": {
+                    "description": "tag group list ordered by tag amount descending",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schema.GetTagGroupResp"
+                    }
+                },
+                "total_tags": {
+                    "description": "total amount of available tags",
+                    "type": "integer"
+                }
+            }
+        },
         "schema.GetTagPageResp": {
             "type": "object",
             "properties": {
@@ -10463,6 +10552,10 @@ const docTemplate = `{
                 },
                 "slug_name": {
                     "description": "slug_name",
+                    "type": "string"
+                },
+                "tag_group": {
+                    "description": "tag group",
                     "type": "string"
                 },
                 "tag_id": {
@@ -10527,7 +10620,14 @@ const docTemplate = `{
                 "status": {
                     "type": "string"
                 },
+                "tag_group": {
+                    "description": "tag group, exposed with the same name used by the tag list API",
+                    "type": "string"
+                },
                 "tag_id": {
+                    "type": "string"
+                },
+                "tagg": {
                     "type": "string"
                 },
                 "updated_at": {
@@ -11199,6 +11299,13 @@ const docTemplate = `{
                 "tag": {
                     "type": "string",
                     "maxLength": 100
+                },
+                "tag_groups": {
+                    "description": "tag group filter, a question matches when it is tagged with a tag of any\nof the given groups. Multiple values are accepted both repeated\n(tag_groups=go\u0026tag_groups=database) and comma separated (tag_groups=go,database)",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "username": {
                     "type": "string",
@@ -12502,6 +12609,9 @@ const docTemplate = `{
         },
         "schema.TagItem": {
             "type": "object",
+            "required": [
+                "tag_group"
+            ],
             "properties": {
                 "display_name": {
                     "description": "display_name",
@@ -12516,6 +12626,11 @@ const docTemplate = `{
                     "description": "slug_name",
                     "type": "string",
                     "maxLength": 35
+                },
+                "tag_group": {
+                    "description": "tag group",
+                    "type": "string",
+                    "maxLength": 20
                 }
             }
         },
@@ -12921,6 +13036,11 @@ const docTemplate = `{
                 "tag_id": {
                     "description": "tag_id",
                     "type": "string"
+                },
+                "tagg": {
+                    "description": "slug_name",
+                    "type": "string",
+                    "maxLength": 20
                 }
             }
         },

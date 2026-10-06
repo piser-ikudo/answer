@@ -194,7 +194,7 @@ const Index = () => {
       formData.tagg = {
         value: '',
         isInvalid: true,
-        errorMsg: t('form.fields.tagg.msg.empty', {
+        errorMsg: t('tagg.msg.empty', {
           keyPrefix: 'tag_modal',
         }),
       };
@@ -203,7 +203,7 @@ const Index = () => {
       formData.tagg = {
         value: tagg.value,
         isInvalid: true,
-        errorMsg: t('form.fields.tagg.msg.range', {
+        errorMsg: t('tagg.msg.range', {
           keyPrefix: 'tag_modal',
         }),
       };

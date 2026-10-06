@@ -17,13 +17,25 @@
  * under the License.
  */
 
+import qs from 'qs';
+
 import request from '@/utils/request';
 import type * as Type from '@/common/interface';
+
+/**
+ * axios serializes arrays as `tag_groups[]=a&tag_groups[]=b` by default, but the
+ * API binds the plain name, so the value would be dropped and the tag group
+ * filter would silently do nothing. `arrayFormat: 'repeat'` sends
+ * `tag_groups=a&tag_groups=b` instead, which is what the API expects.
+ */
+const paramsSerializer = (params: unknown) =>
+  qs.stringify(params, { arrayFormat: 'repeat' });
 
 export const getSearchResult = (params?: Type.SearchParams) => {
   const apiUrl = '/answer/api/v1/search';
 
   return request.get<Type.SearchRes>(apiUrl, {
     params,
+    paramsSerializer,
   });
 };

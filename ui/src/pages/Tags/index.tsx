@@ -23,7 +23,13 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 import { usePageTags, useSkeletonControl } from '@/hooks';
-import { Tag, Pagination, QueryGroup, TagsLoader } from '@/components';
+import {
+  Tag,
+  Pagination,
+  QueryGroup,
+  TagsLoader,
+  TagGroupFilter,
+} from '@/components';
 import { formatCount, escapeRemove } from '@/utils';
 import { tryNormalLogged } from '@/utils/guard';
 import { useQueryTags, following } from '@/services';
@@ -39,6 +45,11 @@ const Tags = () => {
 
   const page = Number(urlSearch.get('page')) || 1;
   const sort = urlSearch.get('sort') || sortBtns[0];
+  // the tag list can be filtered by several groups at once, the value is kept
+  // in the url as a comma separated list
+  const curGroups = (urlSearch.get('tag_groups') || '')
+    .split(',')
+    .filter(Boolean);
 
   const pageSize = 20;
   const {
@@ -49,6 +60,7 @@ const Tags = () => {
     page,
     page_size: pageSize,
     ...(searchTag ? { slug_name: searchTag } : {}),
+    ...(curGroups.length > 0 ? { tag_groups: curGroups } : {}),
     ...(sort ? { query_cond: sort } : {}),
   });
 
@@ -57,6 +69,18 @@ const Tags = () => {
   const handleChange = (e) => {
     setSearchTag(e.target.value);
     setUrlSearch((prev) => {
+      prev.set('page', '1');
+      return prev;
+    });
+  };
+
+  const handleGroupChange = (groups: string[]) => {
+    setUrlSearch((prev) => {
+      if (groups.length > 0) {
+        prev.set('tag_groups', groups.join(','));
+      } else {
+        prev.delete('tag_groups');
+      }
       prev.set('page', '1');
       return prev;
     });
@@ -84,6 +108,11 @@ const Tags = () => {
         <h3 className="mb-4">{t('title')}</h3>
         <div className="d-block d-sm-flex justify-content-between align-items-center flex-wrap">
           <Stack direction="horizontal" gap={3} className="mb-3 mb-sm-0">
+            <TagGroupFilter
+              selected={curGroups}
+              onChange={handleGroupChange}
+              size="sm"
+            />
             <Form>
               <Form.Group controlId="formBasicEmail">
                 <Form.Control
@@ -129,6 +158,14 @@ const Tags = () => {
                 <Card className="h-100">
                   <Card.Body className="d-flex flex-column align-items-start">
                     <Tag className="mb-3" data={tag} />
+
+                    {tag.tag_group ? (
+                      <div className="text-secondary small mb-3">
+                        {t('group_label')}
+                        {': '}
+                        {tag.tag_group}
+                      </div>
+                    ) : null}
 
                     <div className="small flex-fill text-break text-wrap text-truncate-3 reset-p mb-3">
                       {escapeRemove(tag.excerpt)}

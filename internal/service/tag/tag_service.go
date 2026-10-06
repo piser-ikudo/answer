@@ -174,6 +174,7 @@ func (ts *TagService) GetTagInfo(ctx context.Context, req *schema.GetTagInfoReq)
 	}
 	resp.TagID = tagInfo.ID
 	resp.TagG = tagInfo.TagG
+	resp.TagGroup = tagInfo.TagG
 	resp.CreatedAt = tagInfo.CreatedAt.Unix()
 	resp.UpdatedAt = tagInfo.UpdatedAt.Unix()
 	resp.SlugName = tagInfo.SlugName
@@ -339,6 +340,8 @@ func (ts *TagService) UpdateTagSynonym(ctx context.Context, req *schema.UpdateTa
 		item.ParsedText = tag.ParsedText
 		item.Status = entity.TagStatusAvailable
 		item.UserID = req.UserID
+		// a synonym created here has no group of its own
+		item.TagG = entity.DefaultTagGroup
 		needAddTagList = append(needAddTagList, item)
 	}
 
@@ -409,7 +412,7 @@ func (ts *TagService) GetTagWithPage(ctx context.Context, req *schema.GetTagWith
 	page := req.Page
 	pageSize := req.PageSize
 
-	tags, total, err := ts.tagCommonService.GetTagPage(ctx, page, pageSize, tag, req.QueryCond)
+	tags, total, err := ts.tagCommonService.GetTagPage(ctx, page, pageSize, tag, req.TagGroups, req.QueryCond)
 	if err != nil {
 		return
 	}
@@ -419,7 +422,7 @@ func (ts *TagService) GetTagWithPage(ctx context.Context, req *schema.GetTagWith
 		item := &schema.GetTagPageResp{
 			TagID:         tag.ID,
 			SlugName:      tag.SlugName,
-			Tag_group:     tag.TagG,
+			TagGroup:      tag.TagG,
 			Description:   htmltext.FetchExcerpt(tag.ParsedText, "...", 240),
 			DisplayName:   tag.DisplayName,
 			OriginalText:  tag.OriginalText,
@@ -436,6 +439,22 @@ func (ts *TagService) GetTagWithPage(ctx context.Context, req *schema.GetTagWith
 		resp = append(resp, item)
 	}
 	return pager.NewPageModel(total, resp), nil
+}
+
+// GetTagGroups get all tag groups with the amount of tags in each of them. The
+// group with an empty name holds every tag that has not been assigned a group
+// yet, and is only returned when such tags exist.
+func (ts *TagService) GetTagGroups(ctx context.Context, req *schema.GetTagGroupsReq) (
+	resp *schema.GetTagGroupsResp, err error) {
+	groups, err := ts.tagCommonService.GetTagGroups(ctx)
+	if err != nil {
+		return nil, err
+	}
+	resp = &schema.GetTagGroupsResp{Groups: groups}
+	for _, group := range groups {
+		resp.TotalTags += group.TagCount
+	}
+	return resp, nil
 }
 
 // MergeTag merge tag

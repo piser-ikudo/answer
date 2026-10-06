@@ -143,6 +143,14 @@ const Index: FC = () => {
               </Link>
             </h3>
 
+            {tagInfo.tag_group ? (
+              <div className="text-secondary small mb-3">
+                {t('group_label')}
+                {': '}
+                <span className="text-body">{tagInfo.tag_group}</span>
+              </div>
+            ) : null}
+
             <div
               className="text-break"
               dangerouslySetInnerHTML={{ __html: tagInfo.excerpt }}
